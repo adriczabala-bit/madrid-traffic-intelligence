@@ -52,9 +52,8 @@ Además, el dataset principal está almacenado en **Parquet** para reducir su ta
 
 He desplegado el proyecto en Streamlit para que pueda consultarse directamente desde el navegador.
 
-👉 **Madrid Traffic Intelligence**
+👉 **[Abrir Madrid Traffic Intelligence](https://madrid-traffic-intelligence.streamlit.app/)**
 
-## 📁 Estructura del proyecto
 
 ```text
 madrid-traffic-intelligence/
