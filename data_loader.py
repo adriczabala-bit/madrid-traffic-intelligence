@@ -6,39 +6,76 @@ BASE_DIR = Path(__file__).resolve().parent
 
 def cargar_datos():
     archivo = BASE_DIR / "multas_madrid_powerbi_comprimido.parquet"
-    df = pd.read_parquet(archivo)
 
-    for col in ["ANIO", "MES", "IMP_BOL", "PUNTOS"]:
-        if col in df.columns:
-            df[col] = pd.to_numeric(df[col], errors="coerce")
-
-    df["FECHA"] = pd.to_datetime(df["FECHA"], errors="coerce")
-
-    columnas_texto = [
+    columnas = [
+        "FECHA",
+        "ANIO",
+        "MES",
+        "HORA",
         "CALIFICACION",
-        "LUGAR",
-        "DESCUENTO",
-        "DENUNCIANTE",
+        "IMP_BOL",
+        "PUNTOS",
         "HECHO-BOL"
     ]
 
-    for col in columnas_texto:
-        if col in df.columns:
-            df[col] = df[col].astype(str).str.strip()
+    df = pd.read_parquet(
+        archivo,
+        columns=columnas
+    )
+
+    df["FECHA"] = pd.to_datetime(
+        df["FECHA"],
+        errors="coerce"
+    )
+
+    df["ANIO"] = pd.to_numeric(
+        df["ANIO"],
+        errors="coerce"
+    ).astype("int16")
+
+    df["MES"] = pd.to_numeric(
+        df["MES"],
+        errors="coerce"
+    ).astype("int8")
+
+    df["IMP_BOL"] = pd.to_numeric(
+        df["IMP_BOL"],
+        errors="coerce"
+    ).astype("int16")
+
+    df["PUNTOS"] = pd.to_numeric(
+        df["PUNTOS"],
+        errors="coerce"
+    ).fillna(0).astype("int8")
+
+    df["CALIFICACION"] = (
+        df["CALIFICACION"]
+        .astype("category")
+    )
+
+    df["HECHO-BOL"] = (
+        df["HECHO-BOL"]
+        .astype("category")
+    )
 
     if "HORA" in df.columns:
         df["HORA_NUM"] = pd.to_numeric(
-            df["HORA"].astype(str).str.extract(r"(\d{1,2})")[0],
+            df["HORA"]
+            .astype(str)
+            .str.extract(r"(\d{1,2})")[0],
             errors="coerce"
-        )
+        ).astype("Int8")
 
-    df["CON_PUNTOS"] = (df["PUNTOS"] > 0).astype(int)
+    df["CON_PUNTOS"] = (
+        df["PUNTOS"] > 0
+    ).astype("int8")
 
     return df
 
 
 def cargar_mapa():
     archivo = BASE_DIR / "multas_madrid_final.xlsx"
+
     mapa = pd.read_excel(archivo)
 
     columnas_numericas = [
