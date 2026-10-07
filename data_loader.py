@@ -7,7 +7,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 def cargar_datos():
 
-    archivo = BASE_DIR / "multas_madrid_powerbi.csv"
+    archivo = BASE_DIR / "multas_madrid_powerbi_comprimido.parquet"
 
     df = pd.read_csv(
         archivo,
