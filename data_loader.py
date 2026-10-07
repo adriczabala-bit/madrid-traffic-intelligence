@@ -1,13 +1,10 @@
-```python
 import pandas as pd
 from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent
 
-
 def cargar_datos():
     archivo = BASE_DIR / "multas_madrid_powerbi_comprimido.parquet"
-
     df = pd.read_parquet(archivo)
 
     for col in ["ANIO", "MES", "IMP_BOL", "PUNTOS"]:
@@ -30,9 +27,7 @@ def cargar_datos():
 
     if "HORA" in df.columns:
         df["HORA_NUM"] = pd.to_numeric(
-            df["HORA"]
-            .astype(str)
-            .str.extract(r"(\d{1,2})")[0],
+            df["HORA"].astype(str).str.extract(r"(\d{1,2})")[0],
             errors="coerce"
         )
 
@@ -40,10 +35,8 @@ def cargar_datos():
 
     return df
 
-
 def cargar_mapa():
     archivo = BASE_DIR / "multas_madrid_final.xlsx"
-
     mapa = pd.read_excel(archivo)
 
     columnas_numericas = [
@@ -63,4 +56,3 @@ def cargar_mapa():
             )
 
     return mapa
-```
