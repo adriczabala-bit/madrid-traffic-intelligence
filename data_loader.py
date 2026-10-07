@@ -1,5 +1,7 @@
+```python
 import pandas as pd
 from pathlib import Path
+
 
 BASE_DIR = Path(__file__).resolve().parent
 
@@ -57,9 +59,8 @@ def cargar_mapa():
 
     archivo = BASE_DIR / "multas_madrid_final.xlsx"
 
-mapa = pd.read_excel(
-    archivo
-)
+    mapa = pd.read_excel(
+        archivo
     )
 
     columnas_numericas = [
@@ -78,3 +79,4 @@ mapa = pd.read_excel(
         )
 
     return mapa
+```
