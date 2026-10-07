@@ -9,10 +9,9 @@ def cargar_datos():
 
     archivo = BASE_DIR / "multas_madrid_powerbi_comprimido.parquet"
 
-    df = pd.read_csv(
-        archivo,
-        encoding="utf-8-sig"
-    )
+   df = pd.read_parquet(
+    archivo
+)
 
     # Convertir columnas numéricas
     for col in ["ANIO", "MES", "IMP_BOL", "PUNTOS"]:
