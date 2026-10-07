@@ -55,11 +55,11 @@ def cargar_datos():
 
 def cargar_mapa():
 
-    archivo = BASE_DIR / "multas_madrid_final.csv"
+    archivo = BASE_DIR / "multas_madrid_final.xlsx"
 
-    mapa = pd.read_csv(
-        archivo,
-        encoding="utf-8-sig"
+mapa = pd.read_excel(
+    archivo
+)
     )
 
     columnas_numericas = [
