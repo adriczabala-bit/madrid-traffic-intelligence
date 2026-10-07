@@ -2,27 +2,19 @@
 import pandas as pd
 from pathlib import Path
 
-
 BASE_DIR = Path(__file__).resolve().parent
 
 
 def cargar_datos():
-
     archivo = BASE_DIR / "multas_madrid_powerbi_comprimido.parquet"
 
     df = pd.read_parquet(archivo)
 
     for col in ["ANIO", "MES", "IMP_BOL", "PUNTOS"]:
         if col in df.columns:
-            df[col] = pd.to_numeric(
-                df[col],
-                errors="coerce"
-            )
+            df[col] = pd.to_numeric(df[col], errors="coerce")
 
-    df["FECHA"] = pd.to_datetime(
-        df["FECHA"],
-        errors="coerce"
-    )
+    df["FECHA"] = pd.to_datetime(df["FECHA"], errors="coerce")
 
     columnas_texto = [
         "CALIFICACION",
@@ -34,11 +26,7 @@ def cargar_datos():
 
     for col in columnas_texto:
         if col in df.columns:
-            df[col] = (
-                df[col]
-                .astype(str)
-                .str.strip()
-            )
+            df[col] = df[col].astype(str).str.strip()
 
     if "HORA" in df.columns:
         df["HORA_NUM"] = pd.to_numeric(
@@ -48,20 +36,15 @@ def cargar_datos():
             errors="coerce"
         )
 
-    df["CON_PUNTOS"] = (
-        df["PUNTOS"] > 0
-    ).astype(int)
+    df["CON_PUNTOS"] = (df["PUNTOS"] > 0).astype(int)
 
     return df
 
 
 def cargar_mapa():
-
     archivo = BASE_DIR / "multas_madrid_final.xlsx"
 
-    mapa = pd.read_excel(
-        archivo
-    )
+    mapa = pd.read_excel(archivo)
 
     columnas_numericas = [
         "latitud_grid",
@@ -73,10 +56,11 @@ def cargar_mapa():
     ]
 
     for col in columnas_numericas:
-        mapa[col] = pd.to_numeric(
-            mapa[col],
-            errors="coerce"
-        )
+        if col in mapa.columns:
+            mapa[col] = pd.to_numeric(
+                mapa[col],
+                errors="coerce"
+            )
 
     return mapa
 ```
