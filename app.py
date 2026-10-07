@@ -1,7 +1,7 @@
 import streamlit as st
+import pandas as pd
 
 from data_loader import cargar_datos, cargar_mapa
-
 from analysis import (
     calcular_kpis,
     evolucion_mensual,
@@ -9,405 +9,269 @@ from analysis import (
     comparativa_anual,
     resumen_infracciones
 )
-
 from charts import (
     grafico_evolucion,
-    grafico_multa_media,
     grafico_horas,
     grafico_anual
 )
-
 from map import crear_hotspots
 
-
-# ==========================================================
-# CONFIGURACIÓN
-# ==========================================================
 
 st.set_page_config(
     page_title="Madrid Traffic Intelligence",
     page_icon="🚦",
-    layout="wide",
-    initial_sidebar_state="expanded"
+    layout="wide"
 )
 
 
-# ==========================================================
-# ESTILO
-# ==========================================================
-
-st.markdown(
-    """
-    <style>
-
-    .main {
+st.markdown("""
+<style>
+    .stApp {
         background-color: #0e1117;
+        color: #f5f5f5;
     }
 
-    .block-container {
-        max-width: 1500px;
-        padding-top: 2rem;
-        padding-bottom: 3rem;
+    .main-title {
+        font-size: 42px;
+        font-weight: 700;
+        margin-bottom: 4px;
     }
 
-    h1 {
-        font-size: 42px !important;
-        font-weight: 800 !important;
+    .subtitle {
+        font-size: 20px;
+        color: #b8bec9;
+        margin-bottom: 4px;
     }
 
-    h2 {
-        margin-top: 35px !important;
+    .caption {
+        color: #8f98a8;
+        margin-bottom: 28px;
     }
 
-    h3 {
-        margin-top: 25px !important;
-    }
-
-    [data-testid="stMetric"] {
+    div[data-testid="stMetric"] {
         background-color: #161b22;
         border: 1px solid #30363d;
         padding: 18px;
         border-radius: 12px;
     }
 
-    [data-testid="stMetricValue"] {
-        font-size: 26px;
+    div[data-testid="stMetricLabel"] {
+        color: #9da7b5;
     }
 
-    </style>
-    """,
-    unsafe_allow_html=True
-)
+    div[data-testid="stMetricValue"] {
+        color: #ffffff;
+    }
 
+    h2 {
+        margin-top: 35px;
+    }
 
-# ==========================================================
-# CARGA DE DATOS
-# ==========================================================
+    .footer {
+        text-align: center;
+        color: #707885;
+        margin-top: 50px;
+        padding: 20px;
+        border-top: 1px solid #30363d;
+    }
+</style>
+""", unsafe_allow_html=True)
+
 
 @st.cache_data
 def cargar():
-
     df = cargar_datos()
     mapa = cargar_mapa()
-
     return df, mapa
 
+
+# =========================================================
+# CARGA DE DATOS
+# =========================================================
 
 df, mapa = cargar()
 
 
-# ==========================================================
-# CABECERA
-# ==========================================================
-
-st.title(
-    "🚦 Madrid Traffic Intelligence"
-)
-
-st.markdown(
-    """
-    ### ¿Dónde, cuándo y qué tipo de infracciones se concentran en Madrid?
-
-    Un análisis interactivo de las sanciones de tráfico para entender
-    cómo se distribuyen a lo largo del tiempo, qué infracciones son
-    más habituales y qué impacto económico tienen.
-    """
-)
-
-st.caption(
-    "4,1 M de sanciones analizadas a partir de "
-    "19 archivos mensuales disponibles entre 2024 y 2026."
-)
-
-
-# ==========================================================
+# =========================================================
 # FILTROS
-# ==========================================================
+# =========================================================
 
 st.sidebar.title("🎛️ Filtros")
 
-st.sidebar.caption(
-    "Ajusta los filtros para explorar los datos según el periodo "
-    "o el tipo de sanción que te interese."
-)
-
-
-anios = sorted(
-    df["ANIO"].dropna().unique()
-)
+anios = sorted(df["ANIO"].dropna().unique())
 
 anios_seleccionados = st.sidebar.multiselect(
     "Año",
-    anios,
+    options=anios,
     default=anios
 )
 
-
 calificaciones = sorted(
-    df["CALIFICACION"].dropna().unique()
+    df["CALIFICACION"].dropna().astype(str).unique()
 )
 
 calificaciones_seleccionadas = st.sidebar.multiselect(
     "Calificación",
-    calificaciones,
+    options=calificaciones,
     default=calificaciones
 )
 
+importes = sorted(df["IMP_BOL"].dropna().unique())
 
-importe_min = float(
-    df["IMP_BOL"].min()
-)
-
-importe_max = float(
-    df["IMP_BOL"].max()
-)
-
-
-importe_seleccionado = st.sidebar.slider(
+importes_seleccionados = st.sidebar.multiselect(
     "Importe de la multa (€)",
-    min_value=importe_min,
-    max_value=importe_max,
-    value=(
-        importe_min,
-        importe_max
-    ),
-    step=10.0
+    options=importes,
+    default=importes
 )
 
+
+# =========================================================
+# APLICAR FILTROS
+# =========================================================
 
 df_filtrado = df[
-    df["ANIO"].isin(
-        anios_seleccionados
-    )
-    &
-    df["CALIFICACION"].isin(
-        calificaciones_seleccionadas
-    )
-    &
-    df["IMP_BOL"].between(
-        importe_seleccionado[0],
-        importe_seleccionado[1]
-    )
+    df["ANIO"].isin(anios_seleccionados)
+    & df["CALIFICACION"].isin(calificaciones_seleccionadas)
+    & df["IMP_BOL"].isin(importes_seleccionados)
 ].copy()
 
 
-# ==========================================================
-# KPIs
-# ==========================================================
+# =========================================================
+# CABECERA
+# =========================================================
 
-kpis = calcular_kpis(
-    df_filtrado
+st.markdown(
+    '<div class="main-title">🚦 Madrid Traffic Intelligence</div>',
+    unsafe_allow_html=True
+)
+
+st.markdown(
+    '<div class="subtitle">¿Dónde, cuándo y qué tipo de infracciones se concentran en Madrid?</div>',
+    unsafe_allow_html=True
+)
+
+st.markdown(
+    '<div class="caption">4,1 M de sanciones analizadas a partir de 19 archivos mensuales disponibles entre 2024 y 2026.</div>',
+    unsafe_allow_html=True
 )
 
 
+# =========================================================
+# CONTROL DE DATOS
+# =========================================================
+
+if df_filtrado.empty:
+    st.warning("No hay sanciones que coincidan con los filtros seleccionados.")
+    st.stop()
+
+
+# =========================================================
+# KPIs
+# =========================================================
+
+kpis = calcular_kpis(df_filtrado)
+
 col1, col2, col3, col4 = st.columns(4)
 
-
 with col1:
-
     st.metric(
-        "🚨 Sanciones",
-        f"{kpis['total_multas']:,}"
+        "Sanciones",
+        f"{kpis['total_multas']:,.0f}"
     )
 
-
 with col2:
-
     st.metric(
-        "💰 Importe total de las sanciones",
+        "Importe total de las sanciones",
         f"{kpis['importe_total']:,.0f} €"
     )
 
-
 with col3:
-
     st.metric(
-        "💶 Multa media",
-        f"{kpis['importe_medio']:.2f} €"
+        "Multa media",
+        f"{kpis['importe_medio']:,.2f} €"
     )
 
-
 with col4:
-
     st.metric(
-        "⚠️ Con pérdida de puntos",
+        "Con pérdida de puntos",
         f"{kpis['porcentaje_puntos']:.2f}%"
     )
 
 
-st.divider()
+# =========================================================
+# EVOLUCIÓN
+# =========================================================
 
+st.header("Evolución de las sanciones")
 
-# ==========================================================
-# EVOLUCIÓN TEMPORAL
-# ==========================================================
+datos_evolucion = evolucion_mensual(df_filtrado)
 
-st.header(
-    "📈 Evolución de las sanciones"
-)
-
-st.markdown(
-    """
-    ¿Cómo ha cambiado el volumen de sanciones y cuánto ha variado
-    el importe medio de las multas a lo largo del periodo analizado?
-    """
+st.plotly_chart(
+    grafico_evolucion(datos_evolucion),
+    use_container_width=True
 )
 
 
-mensual = evolucion_mensual(
-    df_filtrado
+# =========================================================
+# PRINCIPALES INFRACCIONES
+# =========================================================
+
+st.header("Principales infracciones")
+
+tabla_infracciones = resumen_infracciones(
+    df_filtrado,
+    n=8
 )
-
-
-col1, col2 = st.columns(2)
-
-
-with col1:
-
-    st.plotly_chart(
-        grafico_evolucion(mensual),
-        use_container_width=True
-    )
-
-
-with col2:
-
-    st.plotly_chart(
-        grafico_multa_media(mensual),
-        use_container_width=True
-    )
-
-
-# ==========================================================
-# RANKING DE INFRACCIONES
-# ==========================================================
-
-st.header(
-    "🚨 Principales infracciones"
-)
-
-st.markdown(
-    """
-    Estas son las infracciones que aparecen con mayor frecuencia
-    en los datos seleccionados, junto con su peso e impacto económico.
-    """
-)
-
-
-resumen = resumen_infracciones(
-    df_filtrado
-)
-
 
 st.dataframe(
-    resumen,
+    tabla_infracciones.style.format({
+        "N.º sanciones": "{:,.0f}",
+        "% del total": "{:.2f}%",
+        "Impacto económico": "{:,.0f} €",
+        "Multa media": "{:,.2f} €"
+    }),
     use_container_width=True,
-    hide_index=True,
-    column_config={
-
-        "Infracción":
-            st.column_config.TextColumn(
-                "Tipo de infracción",
-                width="large"
-            ),
-
-        "N.º sanciones":
-            st.column_config.NumberColumn(
-                "N.º sanciones",
-                format="%d"
-            ),
-
-        "% del total":
-            st.column_config.NumberColumn(
-                "Peso sobre el total",
-                format="%.1f %%"
-            ),
-
-        "Impacto económico":
-            st.column_config.NumberColumn(
-                "Impacto económico",
-                format="%,.0f €"
-            ),
-
-        "Multa media":
-            st.column_config.NumberColumn(
-                "Multa media",
-                format="%.2f €"
-            )
-    }
+    hide_index=True
 )
 
 
-# ==========================================================
-# PATRONES HORARIOS
-# ==========================================================
+# =========================================================
+# HORAS
+# =========================================================
 
-st.header(
-    "⏱️ ¿Cuándo se concentran las sanciones?"
-)
+st.header("¿Cuándo se concentran las sanciones?")
 
-st.markdown(
-    """
-    Distribución de las sanciones por hora para detectar
-    las franjas del día con mayor actividad.
-    """
-)
-
-
-horas = multas_por_hora(
-    df_filtrado
-)
-
+datos_horas = multas_por_hora(df_filtrado)
 
 st.plotly_chart(
-    grafico_horas(horas),
+    grafico_horas(datos_horas),
     use_container_width=True
 )
 
 
-# ==========================================================
+# =========================================================
 # COMPARATIVA ANUAL
-# ==========================================================
+# =========================================================
 
-st.header(
-    "📊 Sanciones por año"
-)
+st.header("Sanciones por año")
 
-st.markdown(
-    """
-    Una visión rápida de cómo se reparte el volumen de sanciones
-    entre los diferentes años disponibles.
-    """
-)
-
-
-anual = comparativa_anual(
-    df_filtrado
-)
-
+datos_anuales = comparativa_anual(df_filtrado)
 
 st.plotly_chart(
-    grafico_anual(anual),
+    grafico_anual(datos_anuales),
     use_container_width=True
 )
 
 
-# ==========================================================
-# HOTSPOTS
-# ==========================================================
+# =========================================================
+# MAPA
+# =========================================================
 
-st.header(
-    "🔥 ¿Dónde se concentran las sanciones?"
+st.header("¿Dónde se concentran las sanciones?")
+
+st.caption(
+    "Mapa basado en una agregación geográfica independiente de 420 celdas espaciales."
 )
-
-st.markdown(
-    """
-    Mapa de las zonas con mayor concentración de sanciones.
-    El tamaño de los puntos ayuda a identificar rápidamente
-    los principales focos de actividad.
-    """
-)
-
 
 st.plotly_chart(
     crear_hotspots(mapa),
@@ -415,19 +279,15 @@ st.plotly_chart(
 )
 
 
-st.caption(
-    "El mapa utiliza una agregación geográfica independiente "
-    "de 420 celdas espaciales."
-)
+# =========================================================
+# FOOTER
+# =========================================================
 
-
-# ==========================================================
-# PIE
-# ==========================================================
-
-st.divider()
-
-st.caption(
-    "Madrid Traffic Intelligence · "
-    "Python · Pandas · Plotly · Streamlit · SQLite"
+st.markdown(
+    """
+    <div class="footer">
+        Madrid Traffic Intelligence · Python · Pandas · Plotly · Streamlit · SQLite
+    </div>
+    """,
+    unsafe_allow_html=True
 )
