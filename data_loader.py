@@ -3,6 +3,7 @@ from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent
 
+
 def cargar_datos():
     archivo = BASE_DIR / "multas_madrid_powerbi_comprimido.parquet"
     df = pd.read_parquet(archivo)
@@ -34,6 +35,7 @@ def cargar_datos():
     df["CON_PUNTOS"] = (df["PUNTOS"] > 0).astype(int)
 
     return df
+
 
 def cargar_mapa():
     archivo = BASE_DIR / "multas_madrid_final.xlsx"
