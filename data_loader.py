@@ -1,19 +1,15 @@
 import pandas as pd
 from pathlib import Path
 
-
-BASE_DIR = Path(__file__).resolve().parent.parent
+BASE_DIR = Path(__file__).resolve().parent
 
 
 def cargar_datos():
 
     archivo = BASE_DIR / "multas_madrid_powerbi_comprimido.parquet"
 
-   df = pd.read_parquet(
-    archivo
-)
+    df = pd.read_parquet(archivo)
 
-    # Convertir columnas numéricas
     for col in ["ANIO", "MES", "IMP_BOL", "PUNTOS"]:
         if col in df.columns:
             df[col] = pd.to_numeric(
@@ -21,13 +17,11 @@ def cargar_datos():
                 errors="coerce"
             )
 
-    # Convertir fecha
     df["FECHA"] = pd.to_datetime(
         df["FECHA"],
         errors="coerce"
     )
 
-    # Limpiar texto
     columnas_texto = [
         "CALIFICACION",
         "LUGAR",
@@ -44,9 +38,7 @@ def cargar_datos():
                 .str.strip()
             )
 
-    # Extraer hora
     if "HORA" in df.columns:
-
         df["HORA_NUM"] = pd.to_numeric(
             df["HORA"]
             .astype(str)
@@ -54,7 +46,6 @@ def cargar_datos():
             errors="coerce"
         )
 
-    # Indicador de pérdida de puntos
     df["CON_PUNTOS"] = (
         df["PUNTOS"] > 0
     ).astype(int)
